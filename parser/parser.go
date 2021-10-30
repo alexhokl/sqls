@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/lighttiger2505/sqls/ast"
@@ -110,7 +111,29 @@ func (p *Parser) Parse() (ast.TokenList, error) {
 	root = parsePrefixGroup(astutil.NewNodeReader(root), aliasLeftMatcher, parseAliasedWithoutAs)
 	root = parseInfixGroup(astutil.NewNodeReader(root), aliasInfixMatcher, true, parseAliased)
 	root = parseInfixGroup(astutil.NewNodeReader(root), identifierListInfixMatcher, true, parseIdentifierList)
+
+	printNode(root)
+
 	return root, nil
+}
+
+func printNode(n ast.Node) {
+	log.Printf(
+		"Start: [%d,%d], End: [%d,%d], Type: [%d] Value: [%s]",
+		n.Pos().Line,
+		n.Pos().Col,
+		n.End().Line,
+		n.End().Col,
+		n.Type(),
+		n.String(),
+	)
+
+	if t, ok := n.(ast.TokenList); ok {
+		for i, n := range t.GetTokens() {
+			log.Printf("About to print leaf [%d]", i)
+			printNode(n)
+		}
+	}
 }
 
 var statementMatcher = astutil.NodeMatcher{
